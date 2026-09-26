@@ -17,3 +17,4 @@ Should be around 95% accurate.
 
 ## Credits
 - Data from MNIST, downloaded from kaggle: https://www.kaggle.com/datasets/oddrationale/mnist-in-csv
+- Orginally made by me here: https://www.khanacademy.org/computer-programming/digit-recognizer-neural-network-interactive/6455747442753536
