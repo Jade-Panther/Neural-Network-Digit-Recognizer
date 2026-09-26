@@ -1,0 +1,2717 @@
+<!DOCTYPE html>
+<html lang='en'>
+    <head>
+        <meta charset='utf-8'>
+        <title>Digit Recognizer Neural Network [Interactive]</title>
+        <link rel='stylesheet' href='https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=keyboard_arrow_down' />
+        
+        <!-- General styling -->
+        <style>
+            :root {
+                --bg-color: rgb(6, 6, 8);
+                --panel-bg: rgb(16, 16, 28);
+                --accent-color: rgb(94, 92, 230);
+                --accent-hover: rgb(132, 119, 242);
+                --text-color: rgb(214, 223, 232);
+                --text-muted: rgb(148, 163, 184);
+                --guess-color: rgb(56, 217, 161);
+                --light-border: rgb(49, 49, 69);
+            }
+    
+            * {
+                box-sizing: border-box;
+            }
+    
+            html, body {
+                overflow-x: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+                background-color: var(--bg-color);
+                font-family: 'Segoe UI';
+                color: var(--text-color);
+            }
+            
+            h2 {
+          	    margin: 2px;
+          	    padding: 8px;
+          	    border-bottom: 2px solid var(--light-border);
+          	}
+          
+            #title {
+                text-align: center;
+                font-weight: 800;
+                margin-top: -10px;
+          	}
+          	
+            #wrapper {
+                max-width: 750px;
+                margin: 0 auto;
+                padding: 34px;
+                display: flex;
+                flex-direction: column;
+                gap: 24px;
+            }
+            
+            .flex {
+                display: flex;
+                gap: 24px;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            canvas {
+                background-color: rgb(0, 0, 0);
+                border: 2px solid var(--light-border);
+                border-radius: 12px;
+                transition: 0.2s;
+            }
+            
+            button {
+                width: 100%;
+                border: none;
+                background-color: var(--accent-color);
+                padding: 12px 24px;
+                border-radius: 8px;
+                color: var(--text-color);
+                font-family: inherit;
+                font-weight: 600;
+                font-size: 14px;
+                cursor: pointer;
+                transition: background-color 0.2s, transform 0.1s;
+            }
+            button:hover {
+                background-color: var(--accent-hover);
+            }
+            button:active {
+                transform: scale(0.98);
+            }
+        </style>
+        
+        <!-- Top styling -->
+        <style>
+        
+            .top-section {
+                margin-top: -7px;
+            }
+            .canvas-container {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+    
+            #draw-canvas {
+                cursor: crosshair;
+                image-rendering: pixelated;
+                width: 335px;
+                height: 335px;
+            }
+            #draw-canvas:hover {
+                border-color: var(--accent-color);
+            }
+    
+            .info-panel {
+                background: var(--panel-bg);
+                border: 1px solid rgb(35, 35, 43);
+                border-radius: 12px;
+                padding: 14px;
+                height: 90%;
+                min-height: 340px; 
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+                
+            }
+            
+            .btn-wrapper button{
+                padding: 10px;
+            }
+            
+            #wrong-btn:not(:disabled) {
+                background: rgba(240, 123, 105);
+            }
+            #wrong-btn:hover:not(:disabled) {
+                background: rgba(245, 158, 144);
+            }
+            
+            .predict-btn {
+                margin-top: -4px;
+                background: var(--guess-color);
+                color: var(--light-border);
+                padding: 7px;
+                font-size: 13px;
+                transition: background-color 0.2s, transform 0.1s;
+            }
+            
+            .predict-btn:hover:not(:disabled) {
+                background: rgb(76, 238, 181);
+            }
+            
+            .predict-btn:disabled {
+                background: var(--light-border);
+                color: var(--text-muted);
+                cursor: not-allowed;
+                opacity: 0.7;
+            }
+            
+            .prediction-btns {
+                display: flex;
+                gap: 8px;
+            }
+            
+            .prediction-btns button {
+                flex: 1;
+            }
+            
+            #info {
+                margin: 3px 0;
+                font-size: 14px;
+                text-align: center;
+            }
+    
+            #guess {
+                font-size: 32px;
+                font-weight: 800;
+                color: var(--guess-color);
+                text-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+                margin: 0;
+                line-height: 1;
+                text-align: center;
+            }
+    
+            .instructions {
+                font-size: 15px;
+                color: var(--text-muted);
+                margin: 0;
+                text-align: center;
+                font-family: monospace;
+            }
+    
+            #probability-dist {
+                display: grid;
+                grid-template-columns: repeat(5, 1fr);
+                grid-template-rows: repeat(2, auto);
+                gap: 5px 0px;
+                justify-items: center;
+                align-items: end;
+            }
+            
+            .prob-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 0px;
+            }
+            
+            .bar-container {
+                width: 18px;
+                height: 45px;
+                border-radius: 4px;
+                background: rgba(255,255,255,.05);
+                display: flex;
+                align-items: flex-end;
+                overflow: hidden;
+            }
+            
+            .bar {
+                width: 100%;
+                height: 0%;
+                background: var(--guess-color);
+                transition: height .25s ease;
+            }
+            
+            .digit {
+                font-size: 12px;
+                font-weight: bold;
+                color: white;
+            }
+            
+            .percent {
+                font-size: 10px;
+                color: var(--text-muted);
+            }
+            
+            .prob-item.active .bar {
+                background: var(--guess-color);
+                box-shadow: 0 0 8px rgba(16,185,129,.5);
+            }
+            
+            #confidence {
+                text-align: center;
+                font-family: monospace;
+                font-size: 15px;
+                color: var(--text-muted);
+                margin: 0;
+            }
+        
+            @media (max-width: 550px) {
+                .top-section {
+                    grid-template-columns: 1fr;
+                }
+                #draw-canvas {
+                    width: 100%;
+                    height: auto;
+                }
+            }
+            
+    </style>
+    
+        <!-- Bottom styling -->
+        <style>
+            #about-flex {
+                gap: 15px;
+                height: 710px;
+            }
+            
+            .canvas-flex {
+                height: 600px;
+                width: 300px;
+            }
+            
+            .canvas-wrapper {
+                position: relative;
+                display: inline-block;
+                
+            }
+            
+            #nn-structure {
+                height: 500px;
+                width: 300px;
+                display: block;
+            }
+            
+            #digit-preview {
+                position: absolute;
+                top: 10px;   
+                left: 35%;  
+                transform: translateX(-50%);
+                height: 70px;
+                width: 70px;
+                z-index: 10;  
+                border-radius: 1px;
+                border-width: 1px;
+            }
+            
+            #side-info-container {
+                width: 300px;
+                font-size: 12px;
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+                
+            }
+            
+            .side-info {
+                position: relative;
+                background: var(--panel-bg);
+                padding: 10px;
+                border: 1px solid rgb(35, 35, 43);
+                border-radius: 15px;
+                cursor: pointer;
+                transition: 0.5s;
+            }
+            .side-info:hover {
+                box-shadow: 0 4px 8px 0 rgba(211, 206, 245, 0.2), 0 6px 20px 0 rgba(206, 199, 245, 0.1);
+                transform: translateY(-5px);
+            }
+            .side-info::before {
+                content: '';
+                position: absolute;
+                left: -6px;
+                top: 20px;
+                width: 10px;
+                height: 10px;
+                background: var(--accent-color);
+                border-left: 1px solid rgb(35, 35, 43);
+                border-bottom: 1px solid rgb(35, 35, 43);
+                transform: rotate(45deg);
+                z-index: 1;
+            }
+            .side-info h4 {
+                font-weight: 800;
+                margin: 5px;
+                font-size: 13px;
+                color: var(--accent-hover);
+            }
+            
+            #bottom-section {
+                margin-top: 7px;
+            }
+
+            .about-header-container {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+               
+                margin-top: -40px;
+                gap: 8px;
+            }
+
+            #bottom-title {
+                margin: 0;
+                padding: 0;
+                font-size: 32px;
+                font-weight: 700;
+                letter-spacing: -0.5px;
+                border: none;
+                text-align: center;
+                letter-spacing: 2px;
+                
+
+            }
+
+            .about-header-container .scroll-arrow.material-symbols-outlined {
+                font-size: 36px; 
+                color: var(--accent-hover);
+                animation: bounce 2s infinite;
+                display: block;
+            }
+
+            @keyframes bounce {
+                0%, 20%, 50%, 80%, 100% {
+                    transform: translateY(0);
+                }
+                40% {
+                    transform: translateY(-6px);
+                }
+                60% {
+                    transform: translateY(-3px);
+                }
+            }
+            
+            .para {
+                font-size: 1rem;
+            }
+            
+            .para strong {
+                color: var(--accent-hover);
+            }
+            
+            h3, h2 {
+                text-align: center;
+                padding: 5px;
+
+            }
+
+            h3 {
+                margin-top: 40px;
+                border-bottom: 1px solid var(--light-border);
+                
+            } 
+            
+            a {
+                color: var(--accent-hover);
+            }
+            a:hover {
+                color: var(--guess-color);
+            }
+            
+            .side-canvas-container {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                margin: 0;
+                padding: 15px;
+                max-width: 340px;
+                background: var(--panel-bg);
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                border-radius: 16px;
+                transition: 0.3s
+            }
+            .side-canvas-container:hover {
+                transform: translateY(-2px);
+            }
+            
+            #loss-graph {
+                width: 250px; 
+                height: 150px;
+                background: rgba(0, 0, 0, 0.2);
+                border-radius: 12px;
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                margin-bottom: 15px;
+            }
+            
+            .caption {
+                font-size: 13px;
+                line-height: 1.5;
+                color: var(--text-muted); 
+                text-align: center;
+                max-width: 90%;
+                margin: 0;
+                font-weight: 500;
+            }
+            
+            #retrain-btn {
+                max-width: 340px;
+                margin-bottom: 10px;
+            }
+            
+            
+            .hyperparameters-container {
+                position: relative;
+                width: 100%;
+            }
+
+            .hyperparameter-status-box {
+                float: right;
+                width: 200px;
+                margin-left: 20px; 
+                margin-bottom: 15px; 
+                padding: 15px;
+                background-color: var(--panel-bg);
+                border: 1px solid var(--light-border);
+                border-radius: 8px;
+            }
+
+            .hyperparameter-status-box h4 {
+                margin-top: 0;
+                margin-bottom: 12px;
+                font-size: 0.95rem;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                color: var(--guess-color); 
+                border-bottom: 1px solid var(--light-border);
+                padding-bottom: 6px;
+            }
+
+            .status-item {
+                display: flex;
+                justify-content: space-between;
+                font-size: 0.85rem;
+                margin-bottom: 8px;
+            }
+
+            .status-item:last-child {
+                margin-bottom: 0;
+            }
+            
+            .status-item span {
+                color: var(--text-muted); 
+            }
+            
+            .status-item strong {
+                color: var(--text-color);
+            }
+            
+            li {
+                margin-bottom: 10px;
+            }
+        </style>
+        
+        <!-- Modal styling -->
+        <style>
+            .modal {
+                position: fixed;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+                padding: 20px;
+                background: var(--light-border);
+                border-radius: 8px;
+                z-index: 1000;
+                font-family: Arial, sans-serif;
+                color: var(--text-muted);
+                display: none;
+            }
+            
+            .modal h3 {
+                border-bottom-color: var(--panel-bg);
+                margin-top: 0;
+            }
+            
+            label {
+                display: block;
+                font-weight: bold;
+                margin-bottom: 4px;
+                font-size: 14px;
+            }
+            
+            input, select {
+                width: 100%;
+                padding: 6px;
+                
+            }
+            
+            #check {
+                display: inline;
+            }
+            
+            #modal-cancel {
+                padding: 6px 12px;
+                margin-right: 8px;
+                cursor: pointer;
+                background: rgba(255, 255, 255, 0.2);
+            }
+            
+            #modal-submit {
+                padding: 6px 12px;
+                background: var(--guess-color);
+                color: white;
+                margin-top: 10px;
+            }
+            
+            #warn {
+                font-size: 12px;
+                margin-bottom: 15px;
+                color: rgba(227, 102, 70);
+                font-family: monospace;
+            }
+            
+            .spinner {
+                width: 50px;
+                height: 50px;
+                border: 5px solid rgba(255,255,255,0.3);
+                border-top: 5px solid white;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin-bottom: 10px;
+                margin-left: 50%;
+                translate: -50%;
+            }
+            
+            @keyframes spin {
+                to { transform: rotate(360deg); }
+            }
+            
+            #loading-overlay {
+                text-align: center;
+            }
+            
+            #load-note {
+                color: var(--guess-color);
+                font-size: 13px;
+                font-family: monospace;
+                margin-top: 10px;
+                text-align: center;
+            }
+        </style>
+    </head>
+    
+    <body>
+        <div id='wrapper'>
+            <h2 id='title'> Neural Network Digit Classifier! </h2>
+        
+            <div class='flex top-section'>
+                <div class='canvas-container'>
+                   <p class='instructions'>Drag mouse to draw on the canvas below</p>
+                   <canvas id='draw-canvas'></canvas>
+                   <p class='instructions' style='font-size: 10px'>Try to draw slow and steady to keep pixels consistent</p>
+                </div>
+        
+                <div class='info-panel'>
+                    <h2 id='guess'>Guess: -</h2>
+                    <div id='confidence'>Confidence: -</div>
+                    <div class="prediction-btns">
+                        <button class='predict-btn' id="confirm-btn" >
+                            ✓ Confirm
+                        </button>
+                    
+                        <button class='predict-btn'id="wrong-btn" >
+                            ✕ Wrong
+                        </button>
+                    </div>
+                    <div id='probability-dist'>
+                        <div class='prob-item'>
+                            <div class='bar-container'>
+                                <div class='bar' id='0-prob'></div>
+                            </div>
+                            <strong class='digit'>0</strong>
+                            <strong class='percent' id='0-text'>0%</strong>
+                        </div>
+                    
+                        <div class='prob-item'>
+                            <div class='bar-container'>
+                                <div class='bar' id='1-prob'></div>
+                            </div>
+                            <strong class='digit'>1</strong>
+                            <strong class='percent' id='1-text'>0%</strong>
+                        </div>
+                    
+                        <div class='prob-item'>
+                            <div class='bar-container'>
+                                <div class='bar' id='2-prob'></div>
+                            </div>
+                            <strong class='digit'>2</strong>
+                            <strong class='percent' id='2-text'>0%</strong>
+                        </div>
+                    
+                        <div class='prob-item'>
+                            <div class='bar-container'>
+                                <div class='bar' id='3-prob'></div>
+                            </div>
+                            <strong class='digit'>3</strong>
+                            <strong class='percent' id='3-text'>0%</strong>
+                        </div>
+                    
+                        <div class='prob-item'>
+                            <div class='bar-container'>
+                                <div class='bar' id='4-prob'></div>
+                            </div>
+                            <strong class='digit'>4</strong>
+                            <strong class='percent' id='4-text'>0%</strong>
+                        </div>
+                    
+                        <div class='prob-item'>
+                            <div class='bar-container'>
+                                <div class='bar' id='5-prob'></div>
+                            </div>
+                            <strong class='digit'>5</strong>
+                            <strong class='percent' id='5-text'>0%</strong>
+                        </div>
+                    
+                        <div class='prob-item'>
+                            <div class='bar-container'>
+                                <div class='bar' id='6-prob'></div>
+                            </div>
+                            <strong class='digit'>6</strong>
+                            <strong class='percent' id='6-text'>0%</strong>
+                        </div>
+                    
+                        <div class='prob-item'>
+                            <div class='bar-container'>
+                                <div class='bar' id='7-prob'></div>
+                            </div>
+                            <strong class='digit'>7</strong>
+                            <strong class='percent' id='7-text'>0%</strong>
+                        </div>
+                    
+                        <div class='prob-item'>
+                            <div class='bar-container'>
+                                <div class='bar' id='8-prob'></div>
+                            </div>
+                            <strong class='digit'>8</strong>
+                            <strong class='percent' id='8-text'>0%</strong>
+                        </div>
+                    
+                        <div class='prob-item'>
+                            <div class='bar-container'>
+                                <div class='bar' id='9-prob'></div>
+                            </div>
+                            <strong class='digit'>9</strong>
+                            <strong class='percent' id='9-text'>0%</strong>
+                        </div>
+                    </div>
+                    <div class='btn-wrapper'>
+                        <button id='clear-btn'>Clear</button>
+                        <button id='retrain-btn-top' class='retrain-btn' style='margin-top: 8px; background-color: var(--light-border);'>Re-train Network</button>
+                    </div>
+                </div>
+        
+            </div>
+            
+            <div id='bottom-section'>
+                <div class='about-header-container'>
+                    <h2 id='bottom-title'>About</h2>
+                    <strong class='scroll-arrow material-symbols-outlined'>
+keyboard_arrow_down</strong>
+                </div>
+                <div class='para'>I am sure that 99% of the people reading this have at least heard of AI and machine learning. Behind all the hype though, AI and neural networks are just organized systems of math tuned in a very specific way to do what we want them to do. In this case, I wanted it to classify digits, but it can be used for pretty much any task if you have the data to train it. </div><br>
+                <div class='para'>Neural networks are somewhat based off the human brain. There are 'neurons' that are connected to others through multiple layers. In a biological brain, neurons fire electrical signals to each other when they detect specific stimuli. With this electronic network, the biological components are replaced with numbers, matrices, and functions.</div><br>
+                
+                <div class='para'>When you draw on the canvas, your image is transformed into individual pixel values. These values act as the initial input, traveling in a one-way direction through the hidden layers. Below, you can see the structure of this network. Draw on the canvas above to see the results change.</div>
+                <h3>Structure</h3>
+                <div class='flex' id='about-flex'>
+                    <div class='canvas-flex'>
+                        <div class='canvas-wrapper'>
+                            <canvas id='nn-structure'></canvas>
+                            <canvas id='digit-preview'></canvas>
+                        </div>
+                        <canvas id='weight-viewer'></canvas>
+                    </div>
+                    <div id='side-info-container'>
+                        <div class='side-info' id='preprocessing'>
+                            <h4>1. Preprocessing</h4>
+                            <div class='side-info-text' >Preprocessing is an often overlooked step of the process since, frankly, it's not very interesting. But it can often greatly improve the accuracy of the network. In this case, the digit is centered on the canvas, scaled and then flattened into one long array.</div>
+                        </div>
+                        <div class='side-info' id='input'>
+                            <h4>2. Input</h4>
+                            <div class='side-info-text' >The <strong style='color: rgb(33, 80, 207)'>input layer</strong> is the first of the neural network. Each neuron takes on the normalized value of its corresponding pixel. Since the images are 28 x 28, there are 784 total input neurons</div>
+                        </div>
+                        <div class='side-info'  id='hidden'>
+                            <h4>3. Hidden layers</h4>
+                            <div class='side-info-text'>The pixel signals travel forward through the <strong style='color: rgb(128, 168, 255);'>hidden layer(s)</strong>. Here, thousands of interconnected mathematical weights and biases detect abstract patterns like loops, straight lines, and sharp edges. These can be combined to recognize the digit.</div>
+                        </div>
+                        <div class='side-info' id='output'>
+                            <h4>4. Output</h4>
+                            <div class='side-info-text' >Finally, the data reaches the 10 nodes of the <strong style='color: rgb(158, 82, 95); font-weight: 600;'>output layer</strong> (one for each digit from 0 to 9). Because the raw outputs (logits) are unscaled, we apply a <strong style='color: rgb(229, 192, 123);'>softmax</strong> activation function to turn them into a probability distribution that totals 100%.</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3>Weights and Biases</h3>
+                <div class='para'>In neural networks, <strong>weights</strong> are just values that determine how strongly one neuron influences the next. For example, a large positive weight would strengthen a signal wheras one close to zero would suppress it. <strong>Biases</strong> are similar, but instead of multipling them by the neuron value, you add them. The whole point of training a neural network is adjusting millions of these tiny numbers so that useful patterns can be detected.</div><br>
+                <div class='para'>
+                    I'm skipping over a ton of math here, but here's the basic idea: to get the value for a neuron, multiply by the weights from the previous layer and add the bias for that specific neuron.
+                </div>
+                <div class='para'>If you click on one of the hidden layer neurons above (second layer, light blue), you can actually view the weights in a 28 x 28 grid. Pixels with higher weights are the most important to that neuron.</div>
+                
+                <h3>Training</h3>
+                <div class='para'>When a network is first initialized, all its weights and biases are completely random. So it basically guesses at everything you give it. To make the AI actually smart, thousands of labeled images are fed into the network to correct its mistakes</div><br>
+                <div class='para'>
+                    This correction process relies on a <strong>Loss Function</strong>, which calculates mathematically 'how wrong' the network's guess was. If the network is highly confident in the wrong number, the loss is high. If it correctly identifies the digit, the loss is low. Our goal is to get this loss as close to zero as possible.
+                </div><br>
+                <div class='flex' style='flex-direction: column;'>
+                    <div class='side-canvas-container'>
+                        <canvas id='loss-graph'></canvas>
+                        <div class='caption'>
+                            The <span style='color: var(--guess-color); font-weight: bold'>green line</span> shows training loss dropping over time as the network trains. The <span class='blue-line-text' style='color: rgb(251, 146, 60); font-weight: bold'>orange line</span> shows validation loss (how good the network does on new data). If the orange line is high, while the green is low, it means that the network is overfitted: it basically memorizes the training data but can't generalize to new inputs. I tried to keep them as close to one another as possible.
+                        </div>
+                    </div>
+                    <button id='retrain-btn' class='retrain-btn'>Re-train Network</button>
+                </div>
+                
+                
+                <div class='para'>To actually adjust the weights and biases (which is how the network 'guesses' something), we use an algorithm called <strong>backpropagation</strong>. Working backward from the output layer to the input layer, the algorithm calculates how much each individual weight and bias contributed to the final error. It uses calculus (specifically, the chain rule, if anyone is curious) to find the derivative of the loss with respect to every single parameter.</div><br>
+                <div class='para'>If you're not familiar with derivatives, think of it as calculating <em>How much you need to change the weight/bias</em> in order to lower the cost.</div><br>
+                <div class='para'>
+                    Once these gradients are calculated, an optimization algorithm called <strong>Gradient Descent</strong> nudges every weight and bias in the direction that reduces the error (cost). By repeating this process millions of times over thousands of images, the network slowly adjusts its weights in a way that makes it able to detect and classify digits.
+                </div>
+                <h3>Hyperparameters</h3>
+                <div class='para'>It may seem like you could simply boot up a neural network, give it data, and have it be >90% accurate easily. Yeah, no. Unless you get lucky, most of the time you have to tweak things called <strong>Hyperparameters</strong>. These are numbers and booleans that change how the network learns slightly, causing different effects. Here are some common ones that I used:</div>
+                <div class='hyperparameters-container'>
+                    <div class='hyperparameter-status-box'>
+                        <h4>Current Config</h4>
+                        <div class='status-item'><span>Epochs:</span> <strong id='curr-epochs'>12</strong></div>
+                        <div class='status-item'><span>Batch Size:</span> <strong id='curr-bs'>64</strong></div>
+                        <div class='status-item'><span>Learning Rate:</span> <strong id='curr-lr'>0.01</strong></div>
+                        <div class='status-item'><span>Dropout:</span> <strong id='curr-dropout'>20%</strong></div>
+                        <div class='status-item'><span>Activation:</span> <strong id='curr-activation'>ReLU</strong></div>
+                    </div>
+                
+                    <ul class='hyperparameters-list'>
+                        <li><strong>Epochs</strong>: The number of epochs is how many times the network loops over the data. Normally, the more epochs the better the network. However, at some point, the network can become <strong>Overfitted</strong>, meaning that it is so tuned to the specific training data, it doesn't do well with new inputs</li>
+                        <li><strong>Batch Size</strong>: This is the number of training examples the network looks at before it calculates the error and updates its weights. Instead of feeding all 60,000 images into the network at once (which takes too much memory) or doing it one by one (which takes too much time), we split them into 'batches' (like 32 or 64 images). It balances speed and training stability.</li>
+                        <li><strong>Learning Rate</strong>: Adjusts how much the network updates its weights and biases after seeing a mistake. If it's too low, the network is stable but can take forever to learn. If it's too high, the network makes massive adjustments, causing the loss to jump wildly up and down without ever finding the right balance.</li>
+                        <li><strong>Dropout Rate</strong>: You know how I mentioned overfitting? Dropout can help with that. During training, dropout randomly <em>disables</em> a certain percentage of neurons in a layer. This forces the remaining neurons to step up, preventing the network from relying too heavily on any single path.</li>
+                        <li><strong>Activation Function</strong>: These are mathematical formulas applied to a neuron's output to introduce non-linearity. Without them, a neural network is just a giant linear equation that can only solve incredibly simple problems. Swapping functions--like using <strong>ReLU</strong> (which turns negative numbers to zero) versus <strong>Sigmoid</strong>--can completely change how fast and effectively a network trains.</li>
+                    </ul>
+                    
+                    <div style='clear: both;'></div>
+                </div>
+                
+                <h3>References</h3>
+                <div class='para'>This is a relatively simple example. Convolutional Neural Networks, Recurrent Neural Networks, Transformers (architecture behind Large Language Models like ChatGPT), Diffusion (image generation), and Object Detection are some even more complicated topics within the large and growing field of machine learning. If you want to go more in depth, here are some of the references I used to make this:</div>
+                <ul>
+                    <li>Best resource, goes in depth into the math involved: <a href='https://neuralnetworksanddeeplearning.com/index.html'>https://neuralnetworksanddeeplearning.com/index.html</a></li>
+                    <li>A good blog introduction to a lot of the concepts: <a href='https://blog.stackademic.com/learn-to-build-a-neural-network-from-scratch-yes-really-cac4ca457efc'>https://blog.stackademic.com/learn-to-build-a-neural-network-from-scratch-yes-really-cac4ca457efc</a></li>
+                    <li>Awesome video by 3Blue1Brown: <a href='https://www.youtube.com/watch?v=aircAruvnKk&vl=en'>https://www.youtube.com/watch?v=aircAruvnKk&vl=en</a></li>
+                </ul>
+                Other, less important, but still interesting ones:
+                <ul>
+                    <li><a href='https://medium.com/thedeephub/he-and-xavier-weight-initialization-functions-acedc5322ce5'>https://medium.com/thedeephub/he-and-xavier-weight-initialization-functions-acedc5322ce5</a></li>
+                    <li><a href='https://www.geeksforgeeks.org/machine-learning/activation-functions-neural-networks/'>https://www.geeksforgeeks.org/machine-learning/activation-functions-neural-networks</a></li>
+                </ul>
+            </div>
+    	</div>
+        
+        <div class='modal'>
+        	<h3>Retrain Network</h3>
+            <div style='margin-bottom: 8px;'>
+                <label>Epochs:</label>
+                <input type='number' id='modal-epochs' value='7' min='1' style='' max='30'>
+            </div>
+            <div style='margin-bottom: 8px;'>
+                <label>Batch Size:</label>
+                <input type='number' id='modal-bs' value='32' min='1' max='100'>
+            </div>
+            <div style='margin-bottom: 8px;'>
+                <label>Learning Rate:</label>
+                <input type='number' id='modal-lr' value='0.03' step='0.01' min='0.0001'>
+            </div>
+            <div style='margin-bottom: 8px;'>
+                <label>Dropout Rate:</label>
+                <input id='modal-drop' type='number' value='0' min='0' max='0.9' step='0.1'>
+            </div>
+            <div style='margin-bottom: 8px;'>
+                <label>Amt of Training Data</label>
+                <input type='number' id='modal-amt' value='7500' step='100' min='10' max='7500'>
+            </div>
+            <div style='margin-bottom: 8px;'>
+                <label>Activation Function</label>
+                <select id='modal-activation'>
+                    <option value='relu'>ReLU</option>
+                    <option value='sigmoid'>Sigmoid</option>
+                    <option value='tanh'>Tanh</option>
+                    <option value='leakyRelu'>Leaky ReLU</option>
+                    <option value='elu'>ELU</option>
+                    <option value='swish'>Swish</option>
+                </select>
+            </div>
+            
+            <div id='warn'>Warning: high values of epochs/training data can cause computer crashes.</div>
+            
+            <div style='text-align: right;'>
+                <button id='modal-cancel'>Cancel</button>
+                <button id='modal-submit'>Train</button>
+            </div>
+        </div>
+        
+        <div class='modal' id='loading-overlay' style='display: block;'>
+            <div class='spinner'></div>
+            
+            <div class='loading-text'>Loading...</div>
+            <div id='load-note'></div>
+        </div>
+        
+        <div class='modal' id='correct-nn'>
+            <h3>Correct Prediction</h3>
+
+            <label for="correct-digit">What digit did you draw?</label>
+        
+            <input id="correct-digit" type="number" min="0" max="9" placeholder="0-9">
+        
+            <div style="text-align:right; margin-top:15px;">
+                <button id="correct-cancel" style='margin-bottom: 10px'>Cancel</button>
+                <button id="correct-submit">Train</button>
+            </div>
+        </div>
+    </body>
+      
+    <!-- Load the MNIST data for training -->
+    <script src='https://cdn.jsdelivr.net/gh/Jade-Panther/MNIST-data/train_data.js'></script>
+    
+    <!-- Preload the weights + biases in the beginning so you don't have to train it everytime -->
+    <script src='https://cdn.jsdelivr.net/gh/Jade-Panther/MNIST-data/params5.js'></script>
+    
+    <!-- The Matrix library and other util functions -->
+    <script type>
+        // I probably could have used an official Matrix library but this was more fun to make
+        // Also this is likely very inefficient but I didn't have the motivation to make it better
+        var Matrix = (function() {
+            /**
+             * Matrix Library
+             * By Quantum Cat (@JadePanther), July 2026
+             * https://www.khanacademy.org/profile/JadePanther
+             * 
+             * Most of these should be self-explanatory what they do
+             */
+            var Mat = {
+                newZero: function(n, m) {
+                    var mat = [];
+                    if(m === undefined) {
+                        m = n;
+                    }
+                    for(var i = 0; i<n; i++) {
+                        mat.push([]);
+                        for(var j = 0; j<m; j++) {
+                            mat[i].push(0);
+                        }
+                    }
+                    return mat;
+                },
+                newFill: function(r, c, val) {
+                    var mat = [];
+                    for(var i = 0; i<r; i++) {
+                        mat.push([]);
+                        for(var j = 0; j<c; j++) {
+                            mat[i].push(val);
+                        }
+                    }
+                    return mat;
+                },
+                newRand: function(n, m, min, max, isInt=false) {
+                    var mat = [];
+                    for(var i = 0; i<n; i++) {
+                        mat.push([]);
+                        for(var j = 0; j<m; j++) {
+                            if(isInt) { mat[i].push(Math.floor(random(min, max))); }
+                            else { mat[i].push(random(min, max)); }
+                        }
+                    }
+                    return mat;
+                },
+                newOnes: function(n, m) {
+                    return this.newFill(n, m, 1);
+                },
+                newIdentity: function(n) {
+                    var mat = [];
+                    for(var i = 0; i<n; i++) {
+                        mat.push([]);
+                        for(var j = 0; j<n; j++) {
+                            mat[i].push(i === j ? 1 : 0);
+                        }
+                    }
+                    return mat;
+                },
+                rows: function(m) {
+                    return m.length;  
+                },
+                cols: function(m) {
+                    return m[0].length;  
+                },
+                isSquare: function(m) {
+                    return this.rows(m) === this.cols(m);
+                },
+                isIdentity: function(m) {
+                    for(var i = 0; i<m.length; i++) {
+                        for(var j = 0; j<m[0].length; j++) {
+                            if(i === j) {
+                                if(m[i][j] !== 1) { return false; }
+                            }
+                            else {
+                                if(m[i][j] !== 0) { return false; }
+                            }
+                        }
+                    }
+                    return true;
+                },
+                shape: function(m) {
+                    return [this.rows(m), this.cols(m)];  
+                },
+                copy: function(m) {
+                    var copyM = [];
+                    for(var i = 0; i<m.length; i++) {
+                        copyM.push([]);
+                        for(var j = 0; j<m[0].length; j++) {
+                            copyM[i].push(m[i][j]);
+                        }
+                    }
+                    return copyM;
+                },
+                isSameSize: function(m1, m2) {
+                    return m1.length === m2.length && m1[0].length === m2[0].length;
+                },
+                isValidMult: function(m1, m2) {
+                    return this.cols(m1) === this.rows(m2);
+                },
+                zeroInPlace: function(m) {
+                    for(var i = 0; i < m.length; i++) {
+                        for(var j = 0; j < m[0].length; j++) {
+                            m[i][j] = 0;
+                        }
+                    }
+                    return m;
+                },
+                add: function(m1, m2) {
+                    if(!m1 || !m2) {
+                        console.log('add got:', m1, m2);
+                        throw new Error('Undefined matrix passed to add');
+                    }
+            
+                    if(!this.isSameSize(m1, m2)) {
+                        return undefined;
+                    }
+                   
+                    var newM = this.copy(m1);
+                    for(var i = 0; i<m2.length; i++) {
+                        for(var j = 0; j<m2[0].length; j++) {
+                            newM[i][j] += m2[i][j];
+                        }
+                    }
+                    return newM;
+                },
+                addInPlace: function(targetMat, sourceMat) {
+                    if(!targetMat || !sourceMat) {
+                        throw new Error('Undefined matrix passed to addInPlace');
+                    }
+                    for(var i = 0; i < targetMat.length; i++) {
+                        for(var j = 0; j < targetMat[0].length; j++) {
+                            targetMat[i][j] += sourceMat[i][j];
+                        }
+                    }
+                    return targetMat;
+                },
+                sub: function(m1, m2) {
+                    if(!this.isSameSize(m1, m2)) return undefined;
+                    var newM = [];
+                    for(var i = 0; i < m1.length; i++) {
+                        newM.push([]);
+                        for(var j = 0; j < m1[0].length; j++) {
+                            newM[i].push(m1[i][j] - m2[i][j]);
+                        }
+                    }
+                    return newM;
+                },
+                multScalar: function(m, num) {
+                    var newM = this.copy(m);
+                    for(var i = 0; i<newM.length; i++) {
+                        for(var j = 0; j<newM[0].length; j++) {
+                            newM[i][j] *= num;   
+                        }
+                    }
+                    return newM;
+                },
+                divScalar: function(m, num) {
+                    return this.multScalar(m, 1/num);
+                },
+                elementwiseMult: function(m, m2) {
+                    if (!m || !m2) {
+                        throw new Error('Matrix mult got undefined input');
+                    }
+                    if(m.length !== m2.length || m[0].length !== m2[0].length) {
+                        return undefined;
+                    }
+                    
+                    var newM = this.copy(m);
+                    for(var i = 0; i<m.length; i++) {
+                        for(var j = 0; j<m[0].length; j++) {
+                            newM[i][j] *= m2[i][j];   
+                        }
+                    }
+                    return newM;
+                }, 
+                getRow: function(m, i) {
+                    return m[i];
+                },
+                getCol: function(m, j) {
+                    var col = [];
+                    for(var i = 0; i<m.length; i++) {
+                        col.push(m[i][j]);
+                    }
+                    return col;
+                },
+                dot: function(v1, v2) {
+                    if(v1.length !== v2.length) { throw('Vectors not of same size'); }
+                    
+                    var sum = 0;
+                    for(var i = 0; i<v1.length; i++) {
+                        sum += v1[i] * v2[i];
+                    }
+                    
+                    return sum;
+                },
+                mult: function(m1, m2) {
+                    if(!m1 || !m2) {
+                        throw new Error('mult received undefined matrix');
+                    }
+                    if(!this.isValidMult(m1, m2)) {
+                        return undefined;
+                    }
+                
+                    var rows = this.rows(m1);
+                    var cols = this.cols(m2);
+                    var result = this.newZero(rows, cols);
+                
+                    for(var i = 0; i < rows; i++) {
+                        for(var k = 0; k < m1[0].length; k++) {
+                            var m1Val = m1[i][k];
+                            for(var j = 0; j < cols; j++) {
+                                result[i][j] += m1Val * m2[k][j];
+                            }
+                        }
+                    }
+                    return result;
+                },
+                det2x2: function(m) {
+                    return m[0][0] * m[1][1] - m[0][1] * m[1][0];  
+                },
+                minorMat: function(m, i, j) {
+                    var minor = [];
+                
+                    for(var row = 0; row < m.length; row++) {
+                        if(row === i) { continue; }
+                
+                        var newRow = [];
+                        for(var col = 0; col < m[row].length; col++) {
+                            if(col === j) { continue; }
+                            newRow.push(m[row][col]);
+                        }
+                        minor.push(newRow);
+                    }
+                
+                    return minor;
+                },
+                negate: function(m) {
+                    return this.multScalar(m, -1);  
+                },
+                sum: function(m) {
+                    var sum = 0;
+                    var rows = m.length;
+                    var cols = m[0].length;
+                    for(var i = 0; i<rows; i++) {
+                        for(var j = 0; j<cols; j++) {
+                            sum += m[i][j];
+                        }
+                    }
+                    return sum;
+                },
+                avg: function(m) {
+                    return this.sum(m) / (this.rows(m) * this.cols(m));  
+                },
+                transpose: function(m) {
+                    var result = [];
+            
+                    for(var j = 0; j < m[0].length; j++) {
+                        result.push([]);
+                        for(var i = 0; i < m.length; i++) {
+                            result[j].push(m[i][j]);
+                        }
+                    }
+                    
+                    return result;
+                },
+                forEach: function(m, fn) {
+                    var newM = this.copy(m);
+                    for(var i = 0; i<m.length; i++) {
+                        for(var j = 0; j<m[0].length; j++) {
+                            newM[i][j] = fn(newM[i][j]);  
+                        }
+                    }
+                    return newM;
+                },
+                activateInPlace: function(m, activationFn) {
+                    for(var i = 0; i < m.length; i++) {
+                        for(var j = 0; j < m[0].length; j++) {
+                            m[i][j] = activationFn(m[i][j]);
+                        }
+                    }
+                    return m;
+                },
+                toMatrix: function (m) {
+                    if(!Array.isArray(m)) { m = [[m]] };
+                    if(!Array.isArray(m[0])) { return m.map(x => [x]) };
+                    return m;
+                },
+                toArray: function(m) {
+                    return m.flat()
+                },
+                print: function(m) {
+                    println('\n');
+                    for(var i = 0; i<m.length; i++) {
+                        print('[');
+                        for(var j = 0; j<m[0].length; j++) {
+                            print(' ' + m[i][j]);
+                        }
+                        print(' ]\n');
+                    }
+                }
+            };
+        
+            return Mat;
+        })();
+    
+        var random = function(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+    </script>
+
+    <!-- Drawing on the canvas -->
+    <script type>
+        // Size constants
+        var SIZE = 28;
+        var CANVAS_SIZE = 335;
+        var CELL_SIZE = CANVAS_SIZE / SIZE;
+        
+        // Initialize the canvas
+        var showC = document.querySelector('#digit-preview')
+        var drawC = document.querySelector('#draw-canvas');
+        var showCtx = showC.getContext('2d')
+        var drawCtx = drawC.getContext('2d');
+        
+        showC.width = CANVAS_SIZE;
+        showC.height = CANVAS_SIZE;
+        
+        drawC.width = CANVAS_SIZE;
+        drawC.height = CANVAS_SIZE;
+        drawC.style.width = CANVAS_SIZE + 'px';
+        drawC.style.height =  CANVAS_SIZE + 'px';
+        
+        // Initialize the pixel array
+        var pixels = Array(SIZE).fill(0).map(() => Array(SIZE).fill(0));
+        var isDrawing = false;
+        
+        // Draw on the canvas when mouse dragging
+        var draw = (e) => {
+            if(!isDrawing) return;
+        
+            // Mouse position inside the canvas
+            const rect = drawC.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+        
+            const gridX = (mouseX / rect.width) * SIZE;
+            const gridY = (mouseY / rect.height) * SIZE;
+        
+            const brushRad = 1.6;
+        
+            // Get the bounds of the stroke
+            let startX = Math.max(0, Math.floor(gridX - brushRad));
+            let endX = Math.min(SIZE, Math.ceil(gridX + brushRad));
+            let startY = Math.max(0, Math.floor(gridY - brushRad));
+            let endY = Math.min(SIZE, Math.ceil(gridY + brushRad));
+        
+            // Draw the brush strokes
+            for(let y = startY; y<endY; y++) {
+                for(let x = startX; x<endX; x++) {
+                    const dx = (x + 0.5) - gridX;
+                    const dy = (y + 0.5) - gridY;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+            
+                    if(dist < brushRad) {
+                        // Right click erase
+                        if(e.buttons === 2) {
+                            pixels[y][x] = Math.max(0, pixels[y][x] - (1 - dist / brushRad) * 285);
+                        }
+                        // Left click draw
+                        else {
+                            pixels[y][x] = Math.round(Math.min(255, pixels[y][x] + (1 - dist / brushRad) * 285));
+                        }
+                    }
+                }
+            }
+        
+            render();
+            render(true);
+            
+        }
+        
+        // Draw the pixels
+        var render = (isShow=false, scale=1, x=0, y=0) => {
+            let ctx = isShow ? showCtx : drawCtx
+            ctx.save();
+            ctx.scale(scale, scale)
+            ctx.translate(x, y)
+            ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+            
+            // Grid lines
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)'; 
+            ctx.lineWidth = 1; 
+            ctx.beginPath();
+            
+            for(let i = 1; i < SIZE; i++) {
+                let pos = i * CELL_SIZE;
+                
+                ctx.moveTo(pos, 0);
+                ctx.lineTo(pos, CANVAS_SIZE);
+                
+                
+                ctx.moveTo(0, pos);
+                ctx.lineTo(CANVAS_SIZE, pos);
+            }
+            ctx.stroke();
+            
+            // Pixels
+            for(let y = 0; y < SIZE; y++) {
+                for(let x = 0; x < SIZE; x++) {
+                    const val = pixels[y][x]
+                    if(val > 0) {
+                        ctx.fillStyle = `rgb(${val}, ${val}, ${val})`;
+                        ctx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                    }
+                }
+            }
+            ctx.restore()
+        }
+        render()
+        
+        // Draw event listeners
+        drawC.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            draw(e);
+        });
+        drawC.addEventListener('mouseup', () => {
+            isDrawing = false;
+        });
+        drawC.addEventListener('mousemove', draw);
+        drawC.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+        
+    </script>
+
+    <!-- Neural network code -->
+    <script type>(() => {
+        // Clear the canvas and reset some DOM elements
+        window.resetCanvas = () => {
+            pixels = Array(SIZE).fill(0).map(() => Array(SIZE).fill(0));
+            render();
+            render(true);
+            updateProbs([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+            renderNetwork(net);
+            document.querySelector("#confirm-btn").disabled = true;
+            document.querySelector("#wrong-btn").disabled = true;
+        }
+        
+        // Helper function for applying opacity
+        const applyAlpha = function(color, alpha) {
+            return color.replace('rgb', 'rgba').replace(')', `,${alpha})`);
+        }
+        
+        // Handle load
+        window.showLoad = () => {
+            document.getElementById('loading-overlay').style.display = 'block';
+        }
+        window.hideLoad = () => {
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
+        
+        // Encoding the data
+        const oneHotEncode = function(label, numClasses) {
+            /**
+             * One hot encode a piece data
+             * In the case of the digit database, this transforms outputs from 0, 1, 2, etc.. to arrays like this:
+             *   0: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+             *   1: [0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+             *   2: [0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
+             *          ...
+             *   9: [0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+             * Notice how the INDEX of the 1 is always the value, while everything else is 0.
+             * This is used in other cases besides just digits
+             * @function
+             * @returns An array of length numClasses where numClasses[label] is 1
+             * 
+             * @param {number} label - Which index should be 1
+             * @param {number} numClasses - The number of classes 
+             */
+            const vector = Array(numClasses).fill(0)
+            
+            if(label >= 0 && label < numClasses) {
+                vector[label] = 1;
+            }
+            else {
+                throw new Error(`Label ${label} is out of bounds for ${numClasses} classes.`);
+            }
+            
+            return vector;
+        }
+        const encodeData = function(dataset, numClasses) {
+            /**
+             * Applies oneHotEncode to the entire dataset
+             */
+            return dataset.map(item => {
+                return [item[0], oneHotEncode(item[1], numClasses)];
+            });
+        }
+        
+        // Splits the data
+        window.trainTestSplit = (data, trainFrac) => {
+            /**
+             * Splits the data into train data and test data
+             * trainFrac * 100% is the percentage that is returned as train
+             */
+            let len = data.length;
+            
+            return [data.slice(0, Math.floor(len * trainFrac)), data.slice(Math.floor(len * trainFrac))]
+        }
+        
+        // Activation functions and derivatives
+        const activations = {
+            linear: {
+                reg: (x) => x,
+                der: (y) => 1,
+                name: 'Linear'
+            },
+            sigmoid: {
+                reg: (x) => { return 1 / (1 + Math.exp(-x)); },
+                der: (x) => { 
+                    const s = 1 / (1 + Math.exp(-x));
+                    return s * (1 - s); 
+                },
+                name: 'Sigmoid'
+            },
+            tanh: {
+                reg: (x) => { return Math.tanh(x); },
+                der: (x) => {
+                    const t = Math.tanh(x);
+                    return 1 - t * t;
+                },
+                name: 'Tanh'
+            },
+            relu: {
+                reg: (x) => Math.max(0, x),
+                der: (y) => y > 0 ? 1 : 0,
+                name: 'ReLU',
+            },
+            leakyRelu: {
+                reg: (x) => x > 0 ? x : 0.01 * x,
+                der: (y) => y > 0 ? 1 : 0.01,
+                name: 'Leaky ReLU'
+            },
+            elu: {
+                reg: (x) => x >= 0 ? x : (Math.exp(x) - 1),
+                der: (x) => x >= 0 ? 1 : Math.exp(x),
+                name: 'ELU'
+            },
+            swish: {
+                reg: (x) => x * 1 / (1 + Math.exp(-x)),
+                der: (x) => {
+                    const sig = 1 / (1 + Math.exp(-x));
+                    const swishScore = x * sig;
+                    return sig + swishScore * (1 - sig); 
+                },
+                name: 'Swish'
+            },
+        };
+        
+        // Loss functions for evaluating cost
+        // Might add more types later
+        const losses = {
+            // Mean-squared-error
+            mse: (predicted, targets) => {
+                let totalError = 0;
+                
+                // For all (predicted-expected) errors, square them and then add them all up
+                for(let i = 0; i<predicted.length; i++) {
+                    totalError += 0.5 * Math.pow(predicted[i] - targets[i], 2);
+                }
+                return totalError / predicted.length
+            },
+            
+            // Cross-Entropy loss
+            crossEntropy: (predicted, targets) => {
+                let totalError = 0;
+                
+                for(let i = 0; i<predicted.length; i++) {
+                    const p = Math.max(1e-15, Math.min(1 - 1e-15, predicted[i]));
+                    totalError += targets[i] * Math.log(p);
+                }
+                return -totalError;
+            }
+        }
+        
+        // Actual Neural Network
+        const NeuralNetwork = (() => {
+            /**
+             * Neural Network
+             * By Quantum Cat (@JadePanther), July 2026
+             * https://www.khanacademy.org/profile/JadePanther
+             * 
+             * @constructor
+             * 
+             * @param {Object} layers - An array of values representing the number of neurons in each layer. 
+             * @param {Object} params - Activation parameters
+             */
+            const NN = function(layers, params = {}) {
+                this.weights = [];
+                this.biases = [];
+                this.layers = layers;
+                this.numInput = layers[0];
+                this.hidden = layers.slice(1, layers.length - 1);
+                this.numEnd = layers[layers.length - 1]
+                this.loss = []
+                this.valLoss = []
+                
+                // Hyperparameters
+                this.hasSoftmax = params.softmax ?? false;
+                this.activations = params.activations ?? Array(layers.length - 1).fill(params.activation ?? 'sigmoid');
+                this.dropoutRate = params.dropout ?? 0;
+                this.learningRante = params.learningRate ?? 0.01
+                
+                
+                // Initialize the weights and biases
+                this.reset()
+            };
+            
+            /* Activation functions */
+            NN.prototype.activation = function(x, layer) {
+                /**
+                 * Performs an activation function on x
+                 * @function
+                 * 
+                 * @params {number} x - Value to perform activation function on
+                 * @params {number} layer - Which layer it's currently on. Only important if the user adjusts activation functions independently for each layer
+                 */
+                const type = this.activations[layer];
+                return activations[type].reg(x);
+            };
+            NN.prototype.activationDer = function(x, layer) {
+                /**
+                 * Basically the same as the function above, but performs the derivative of the activation function on x instead.
+                 */
+                const type = this.activations[layer];
+                return activations[type].der(x);
+            };
+            
+            /* Softmax is used only for the output layer */
+            NN.prototype.softmax = function(z) {
+                /**
+                 * Perform softmax on an array of values
+                 * Softmax can be thought of as a probability distribution. It takes an array of values and outputs a mapped array where values sum to 1.
+                 * @function
+                 * 
+                 * @params {Object} z - An array of values
+                 */
+                const maxZ = Math.max(...z.map(x => x[0]));
+            
+                let sum = 0;
+                for(let i = 0; i < z.length; i++) {
+                    sum += Math.exp(z[i][0] - maxZ);
+                }
+            
+                return z.map(x => [Math.exp(x[0] - maxZ) / sum]);
+            };
+            
+            /* Loss */
+            NN.prototype.calculateLoss = function(predicted, targets) {
+                /**
+                 * Calculate the loss between what the network predicted and the actual values
+                 */
+                 
+                // Cross-entropy loss is generally used with softmax instead of MSE
+                if(this.hasSoftmax) {
+                    return losses.crossEntropy(predicted, targets);
+                }
+                return losses.mse(predicted, targets);
+            };
+            NN.prototype.evaluate = function(dataset) {
+                /**
+                 * Evalulate the network by determining the total loss
+                 */
+                 
+                let totalLoss = 0;
+            
+                for(let i = 0; i < dataset.length; i++) {
+                    const prediction = Matrix.toArray(this.feedForward(dataset[i][0]));
+            
+                    totalLoss += this.calculateLoss(prediction, dataset[i][1]);
+                }
+            
+                return totalLoss / dataset.length;
+            };
+            
+            /* Learning */
+            NN.prototype.feedForward = function(input, isTraining=false) {
+                /**
+                 * Feeds the inputs forward into the network
+                 * @function
+                 * 
+                 * @params {Object} input - Column vector of the inputs into the neural network
+                 * 
+                 * @returns {Object} The outputs of the network
+                 */
+                 
+                // Initialize the A and Z matrices
+                // Z is the raw linear transformation without the activation functions
+                //     Math: z^l = w^l * a^(l−1) + b^l
+                // A is the activated output (Z through some activation function) that is passed
+                //     through to the next layer
+                //     Math: a^l = σ(z^l)   (σ is the activation function)
+                // They are both used later in backprop
+                this.Z = [];
+                this.A = [];
+                this.dropoutMasks = []
+                
+                // First layer is the inputs
+                this.A[0] = Matrix.toMatrix(input);
+            
+                // 
+                for(let i = 0; i < this.weights.length; i++) {
+                    // Perform the linear operations. Matrix multiply the weights with the previous layer and add the biases
+                    this.Z[i] = Matrix.add(Matrix.mult(this.weights[i], this.A[this.A.length - 1]), this.biases[i]);
+                    
+                    // Calculate A[i + 1], which is just Z[i] put into an activation function
+                    // Activation functions map values non-linearly and/or into a specific range like 0-1
+                    
+                    // If it is the last layer (and softmax activated) do softmax instead on the whole layer
+                    if(this.hasSoftmax && i === this.weights.length - 1) {
+                        this.A[i + 1] = this.softmax(this.Z[i]);
+                    }
+                    
+                    // Otherwise perform the activation functions on individual elements
+                    else {
+                        this.A[i + 1] = Matrix.activateInPlace(Matrix.copy(this.Z[i]), (x) => this.activation(x, i));
+                    }
+                    
+                    // Turn off certain neurons using the dropoutMask array
+                    if(isTraining && this.dropoutRate > 0 && i < this.weights.length - 1) {
+                        let rows = Matrix.rows(this.A[i + 1]);
+                        let cols = Matrix.cols(this.A[i + 1]);
+                        let mask = Matrix.newZero(rows, cols);
+                        let scale = 1 / (1 - this.dropoutRate);
+                        
+                        for(let r = 0; r < rows; r++) {
+                            for(let c = 0; c < cols; c++) {
+                                mask[r][c] = Math.random() >= this.dropoutRate ? scale : 0;
+                            }
+                        }
+                        this.dropoutMasks[i] = mask;
+                        this.A[i + 1] = Matrix.elementwiseMult(this.A[i + 1], mask);
+                    }
+                }
+        
+                // Return the last layer (i.e the outputs)
+                // In mathematical notation the outputs are known as 'y-hat': ŷ
+                // Represents the prediction of the network
+                return this.A[this.A.length - 1];
+            };
+            NN.prototype.backprop = function(inputs, targets) {
+                /**
+                 * Performs backpropagation by sending the error back through the network
+                 * @function
+                 * 
+                 * @params {Object} inputs - The inputs of the network
+                 * @params {Object} targets - What the network should output
+                 */
+                 
+            	// Standardize inputs and targets (what we want the network to output)
+            	// inputs are often represented as X and targets as Y
+                inputs = Matrix.toMatrix(inputs);
+                targets = Matrix.toMatrix(targets);
+        
+                // Use the activations and pre-activations from feedforward
+                let A = this.A;
+                let Z = this.Z;
+         
+                // These tell the network how much to change the weights and biases
+                // If the 'ideal' weight (that would make the network perfect) is 0 for a particular neuron, and that weight is currently 0.5, the weight gradient will be negative to nudge it towards 0
+        	    // So, when you apply the gradients to the actual weights, it will make the network a little better than it was before!
+        	    // That little 'nudge' towards 0 (or any 'ideal' value) is what we're calculating in backprop
+                let weightGrads = new Array(this.weights.length);
+                let biasGrads = new Array(this.biases.length);
+        
+                let delta;
+                
+        	    // 'delta' (δ) represents the 'error responsibility' of a layer's neurons
+                // Mathematically, it is defined as the partial derivative of cost with respect to the pre-activation input: δ = ∂C/∂z
+                if(this.hasSoftmax) {
+                    // If using softmax and cross-entropy, the delta simplifies nicely to just A^L - T
+                    delta = Matrix.sub(A[A.length - 1], targets);
+                }
+                else {
+            	    // Math: δ^L = (a^L - y) ⊙ σ'(z^L)
+            	    // With the Mean-Squared-Error (MSE) cost function, ∂C/∂a ends up being (A - Y)
+            	    // And ∂a/∂z is the second line here
+                    delta = Matrix.elementwiseMult(
+                        Matrix.sub(A[A.length - 1], targets), // (A - Y)
+                        Matrix.forEach(Z[Z.length - 1], z => this.activationDer(z, this.weights.length - 1)) // σ'(z)
+                    );
+                }
+                
+                // Math: ∂C/∂b^L = δ^L
+        	    // Because z = w * a + b, the derivative ∂z/∂b is exactly 1
+                // Which makes the bias gradient (or ∂C/∂b) just equal to delta. That's nice
+                biasGrads[this.weights.length - 1] = delta;
+        
+                // Math: ∂C/∂W^L = δ^L * (a^(L-1))^T
+        	    // The weight gradients (or ∂C/∂w) is a little more complicated.
+                weightGrads[this.weights.length - 1] = Matrix.mult(delta, Matrix.transpose(A[A.length - 2]));
+                
+                // Loop backwards through the hidden layers
+                for(let l = this.weights.length - 2; l >= 0; l--) {
+            	    // Compute the error δ in terms of the error of the next layer
+            	    // This is like moving the error backwards through the network (backpropagating)
+                    delta = Matrix.elementwiseMult(
+                        Matrix.mult(Matrix.transpose(this.weights[l + 1]), delta),
+                        Matrix.forEach(Z[l], z => this.activationDer(z, l))
+                    );
+                    
+                    if(this.dropoutRate > 0 && this.dropoutMasks[l]) {
+                        delta = Matrix.elementwiseMult(delta, this.dropoutMasks[l]);
+                    }
+                
+         	    
+        	        // Again, the bias for the layer is just equal to delta
+                    biasGrads[l] = delta;
+        
+        	        // And get the weight gradients as well
+                    weightGrads[l] = Matrix.mult(delta, Matrix.transpose(A[l]));
+                }
+                
+                return { weightGrads, biasGrads };
+            };
+            
+            /* Training */
+            NN.prototype.train = function(trainData, {
+                epochs = 100,
+                validationData = null,
+                batchSize = 32,
+                shuffle = true, 
+                verbose = true,
+                learningRate = 0.01,
+                dropoutRate = 0,
+            } = {}) {
+                /**
+                     * Train the data using mini-batch stochastic gradient descent.
+                     * @function
+                     * 
+                     * @param {Object} trainData - Data used to train the network
+                     *      For example, if you were the train it on XOR:
+                     *      [  
+                     *          [[0, 0], [0]], 
+                     *          [[0, 1], [1]],
+                     *          [[1, 0], [1]],
+                     *          [[1, 1], [0]]
+                     *      ]
+                     *      Each element is an array where the first index is the inputs, and the second index is the outputs
+                     *      **Make sure they are both in arrays**
+                     * @param {number} epochs - The number of times to loop through all training data
+                     * @param {Object} validationData - Used to determine the loss on a set of data the network is NOT trained on. A good measure of how well the network does with new data
+                     * @param {number} batchSize - The number of batches. At the end of each batch weight and bias gradients are averaged.
+                     * @param {boolean} shuffle - Whether or not to shuffle the data before training. Normally good to have this on
+                     * @param {boolean} verbose - Whether or not to print the epochs and loss. 
+                     * @param {number} learningRate - Adjusts how fast the network learns
+                     * @param {number} dropoutRate - What fraction of neurons are dropped out. Can improve validation loss
+                    
+                     * 
+                */
+                this.epochs = epochs
+                this.learningRate = learningRate
+                this.batchSize = batchSize
+                this.dropoutRate = dropoutRate
+                
+                // Initialize the total gradients to zero
+                let totalWeightGrads = [];
+                let totalBiasGrads = [];
+                for(let l = 0; l < this.weights.length; l++) {
+                    totalWeightGrads.push(Matrix.newZero(Matrix.rows(this.weights[l]), Matrix.cols(this.weights[l])));
+                    totalBiasGrads.push(Matrix.newZero(Matrix.rows(this.biases[l]), Matrix.cols(this.biases[l])));
+                }
+            
+                // Learn for a certain number of epochs. The more epochs the more 'fitted' the
+                // network is to the training data.
+                // This can lead to overfitting though so more epochs != always good
+                for(let epoch = 0; epoch < epochs; epoch++) {
+                    
+                    // First, shuffle the data
+                    if(shuffle) {
+                        // Fisher-Yates Data Shuffle Algorithm if anyone's interested
+                        // Should be faster than regular JS sort
+                        for(let i = trainData.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [trainData[i], trainData[j]] = [trainData[j], trainData[i]];
+                        }
+                    }
+                    
+                    
+                    let loss = 0;
+            
+                    // Loop through the training data by batchsize
+                    for(let i = 0; i < trainData.length; i+=batchSize) {
+                        
+                        // Initialize batch gradients to 0
+                        for(let l = 0; l < this.weights.length; l++) {
+                            Matrix.zeroInPlace(totalWeightGrads[l]);
+                            Matrix.zeroInPlace(totalBiasGrads[l]);
+                        }
+                        
+                        let currBatchSize = 0
+                        
+                        // Process each sample inside the bounds of the mini-batch window
+                        for(let b = 0; b<batchSize && (i + b) < trainData.length; b++) {
+                            const sample = trainData[i + b];
+                            currBatchSize++
+                            
+                            // This is what the network predicts
+                            // Feedforward also updates this.A for use in backprop
+                            const predictionMat = this.feedForward(sample[0], true);
+                            
+                            // Calculate the loss
+                            if(verbose) {
+                                const prediction = Matrix.toArray(predictionMat);
+                                loss += this.calculateLoss(prediction, sample[1]);
+                            }
+                            
+                            // Get the weights and bias gradients
+                            const { weightGrads, biasGrads } = this.backprop(sample[0], sample[1]);
+                            
+                            // Add the gradients from backprop to the running totals
+                            for(let l = 0; l < this.weights.length; l++) {
+                                Matrix.addInPlace(totalWeightGrads[l], weightGrads[l]);
+                                Matrix.addInPlace(totalBiasGrads[l], biasGrads[l]);
+                            }
+                        }
+                        
+                        // Update the weights and biases
+                        // This is why batching is useful, it limits the number of times you have to do this, making it somewhat faster
+                        // However, you must take the average of the weight/bias gradients, so the network will learn slightly different then if you updated them every backpropagation
+                        for(let l = 0; l < this.weights.length; l++) {
+                            
+                            // Get the average for weights and biases
+                            let avgWGrad = Matrix.divScalar(totalWeightGrads[l], currBatchSize);
+                            let avgBGrad = Matrix.divScalar(totalBiasGrads[l], currBatchSize);
+            
+                            // Multiply by learning rate
+                            let wUpdate = Matrix.multScalar(avgWGrad, this.learningRate);
+                            let bUpdate = Matrix.multScalar(avgBGrad, this.learningRate);
+            
+                            // Update the network's weights and biases
+                            this.weights[l] = Matrix.sub(this.weights[l], wUpdate);
+                            this.biases[l] = Matrix.sub(this.biases[l], bUpdate);
+                        }
+                        
+                    }
+            
+                    // Print some stuff if verbose is turned on
+                    if(verbose) {
+                        const epochLoss = loss / trainData.length;
+                        if(validationData) {
+                            const valLoss = this.evaluate(validationData); 
+                            this.valLoss.push(valLoss)
+                            console.log(`Epoch ${epoch + 1}/${epochs} loss=${epochLoss.toFixed(6)} val_loss=${valLoss.toFixed(6)}`);
+                        }
+                        else {
+                            this.loss.push(epochLoss.toFixed(6))
+                            console.log(`Epoch ${epoch + 1}/${epochs} loss=${epochLoss.toFixed(6)}`);
+                        }
+                    }
+                }
+            };
+            
+            /* Testing and predicting */
+            NN.prototype.predict = function(inputs) {
+                /**
+                 * For each input send through the neural network to map to output
+                 * @function
+                 * 
+                 * @params {Object} inputs - The inputs to send through the network
+                 */
+                return inputs.map(i => Matrix.toArray(this.feedForward(i)));
+            };
+            
+            /* Logging/output */
+            NN.prototype.toJSON = function() {
+                /**
+                 * Just outputs some data to JSON
+                 */
+                return {
+                    weights: this.weights.map(w => w.data ?? w),
+                    biases: this.biases.map(b => b.data ?? b),
+                    loss: this.loss,
+                    valLoss: this.valLoss
+                };
+            };
+            NN.prototype.output = function() {
+                console.log(JSON.stringify(this.toJSON(), null));
+            }
+            NN.prototype.setParameters = function(params) {
+                /**
+                 * Sets the parameters (weights + biases) as well as the loss values so you don't have to retrain the network'
+                 */
+                this.weights = params.weights.map(layer => layer.map(row => [...row]));
+                this.biases = params.biases.map(layer => layer.map(row => [...row]));
+                this.loss = [...(params.loss ?? [])];
+                this.valLoss = [...(params.valLoss ?? [])];
+            }
+            
+            NN.prototype.reset = function() {
+                this.weights = [];
+                this.biases = [];
+                this.loss = [];
+                this.valLoss = [];
+                
+                for(let i = 1; i < this.layers.length; i++) {
+                    const type = this.activations[i - 1];
+                    let bound;
+                    
+                    // Initialize the weights differently depending on the activation function
+                    if(type === 'relu' || type === 'leakyRelu') {
+                        bound = Math.sqrt(2.0 / this.layers[i - 1]);
+                    }
+                    else {
+                        bound = 1.0 / Math.sqrt(this.layers[i - 1]);
+                    }
+                    
+                    // Each weight[i] matrix has layers[i] number of rows and layers[i - 1] number of columns
+                    // This is because each neuron needs to connect to the neurons of the next layer
+                    this.weights.push(Matrix.newRand(this.layers[i], this.layers[i - 1], -bound, bound));
+                    
+                    // Biases are only an array for each layer
+                    this.biases.push(Matrix.newFill(this.layers[i], 1, 0));
+                }
+            }
+        
+            return NN;
+        })();
+        
+        // Renders the network (not used here)
+        const NetworkRenderer = (() => {
+            const NNRenderer = {};
+            
+            NNRenderer.defaults = {
+                neuronRadius: 15,
+            
+                neuronInputFill: 'white',
+                neuronHiddenFill: 'rgb(195, 237, 165)',
+                neuronOutputFill: 'rgb(235, 164, 177)',
+                neuronStroke: 'black',
+            
+                posWeightColor: 'rgb(175, 175, 250)',
+                negWeightColor: 'rgb(240, 187, 108)',
+            
+        
+                showBiases: false,
+                showWeightAlpha: false,
+                showWeightThickness: true,
+                lineThickness: 5,
+            
+                backgroundColor: null,
+                width: null,
+                height: null,
+                
+                inputs: [],
+                outputs: [],
+                outputLabels: [],
+            };
+            NNRenderer.getPositions = function(layers, width, height) {
+                const positions = [];
+        
+                const layerSpacing = width / (layers.length + 1);
+            
+                for(let l = 0; l < layers.length; l++) {
+                    const neuronCount = layers[l];
+                    const neuronSpacing = height / (neuronCount + 1);
+            
+                    positions[l] = [];
+            
+                    for(let n = 0; n < neuronCount; n++) {
+                        positions[l].push({
+                            x: (l + 1) * layerSpacing,
+                            y: (n + 1) * neuronSpacing
+                        });
+                    }
+                }
+            
+                return positions;
+            }
+            NNRenderer.render = function(net, ctx, options) {
+                const opts = {
+                    ...this.defaults,
+                    ...options
+                };
+                const canvas = ctx.canvas;
+                
+                const pos = this.getPositions(net.layers, opts.width ?? canvas.width, opts.height ?? canvas.height);
+                
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw the connections between neurons for each layer
+                ctx.lineWidth = opts.lineThickness;
+                for(let l = 0; l < net.weights.length; l++) {
+                    const W = net.weights[l];
+                    
+                    for(let i = 0; i < W.length; i++) {
+                        for(let j = 0; j < W[0].length; j++) {
+                            const weight = W[i][j];
+            
+                            const from = pos[l][j];
+                            const to = pos[l + 1][i];
+            
+                            ctx.beginPath();
+                            ctx.moveTo(from.x, from.y);
+                            ctx.lineTo(to.x, to.y);
+            
+                            
+                            const alpha = opts.showWeightAlpha ? Math.min(1, Math.abs(weight)) : 1;
+                            ctx.strokeStyle = weight > 0 ? applyAlpha(opts.posWeightColor, alpha) : applyAlpha(opts.negWeightColor, alpha);
+                            
+                            if(opts.showWeightThickness) {
+                                ctx.lineWidth = Math.max(4, Math.abs(weight) * 3);
+                            }
+            
+                            ctx.stroke();
+                        }
+                    }
+                }
+        
+                // Draw the neurons
+                ctx.lineWidth = 2
+                for(let l = 0; l < pos.length; l++) {
+                    for(let i = 0; i < pos[l].length; i++) {
+                        const p = pos[l][i]
+                        let fillColor;
+                        if(l === 0) fillColor = opts.neuronInputFill;
+                        else if(l === pos.length - 1) fillColor = opts.neuronOutputFill;
+                        else fillColor = opts.neuronHiddenFill;
+                        
+                
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, 15, 0, Math.PI * 2);
+            
+                        ctx.fillStyle = fillColor;
+                        ctx.fill();
+            
+                        ctx.strokeStyle = opts.neuronStroke;
+                        ctx.stroke();
+                        
+                        if(l === 0 || l === pos.length - 1) {
+                            ctx.fillStyle = 'black';
+                            ctx.font = '12px Arial';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                
+                            ctx.fillText(l === 0 ? opts.input[i] : opts.output[i], p.x, p.y);
+                            if(l === pos.length - 1 && opts.outputLabels.length === opts.output.length) {
+                                ctx.fillText(opts.outputLabels[i], p.x, p.y+27);
+                            }
+                        }
+                    }
+                }
+        
+            }
+            
+            return NNRenderer;
+    })()
+        
+        // Initialize network
+        window.net = new NeuralNetwork([784, 30, 10], {
+            activations: ['relu'],
+            softmax: true,
+        });
+        
+        // Encode and normalize data
+        data = encodeData(data, 10)
+        data = data.map(item => {
+            return [item[0].map(pixel => pixel / 255), item[1]];
+        });
+        
+        // Feed in the parameters
+        net.setParameters(params)
+        net.output()
+        
+        hideLoad()
+        
+        
+        // Update the probabilities on the side
+        window.updateProbs = (probs) => {
+            const maxIndex = probs.indexOf(Math.max(...probs));
+        
+            for(let i = 0; i < 10; i++) {
+                const bar = document.getElementById(`${i}-prob`);
+                const text = document.getElementById(`${i}-text`);
+                const item = bar.parentElement.parentElement;
+        
+                const percent = probs[i] * 100;
+        
+                bar.style.height = `${percent}%`;
+                text.textContent = `${percent.toFixed(1)}%`;
+        
+                item.classList.toggle('active', i === maxIndex);
+            }
+        
+            let blank = probs.every(p => p < 0.001)
+            document.querySelector('#guess').textContent = `Guess: ${ !blank ? maxIndex : '-'}`;
+            document.querySelector('#confidence').textContent = `Confidence: ${!blank ? (probs[maxIndex] * 100).toFixed(1) + '%' : '-'}`
+        }
+        
+        // Preprocess the pixels
+        window.preprocess = (pixels, SIZE = 28) => {
+            let minX = SIZE, maxX = -1, minY = SIZE, maxY = -1;
+            
+            // Find bounding box
+            for(let y = 0; y < SIZE; y++) {
+                for(let x = 0; x < SIZE; x++) {
+                    if(pixels[y][x] > 0) {
+                        if(x < minX) minX = x;
+                        if(x > maxX) maxX = x;
+                        if(y < minY) minY = y;
+                        if(y > maxY) maxY = y;
+                    }
+                }
+            }
+        
+            if(maxX === -1 || maxY === -1) {
+                return new Array(SIZE * SIZE).fill(0);
+            }
+        
+            const digitWid = (maxX - minX) + 1;
+            const digitHei = (maxY - minY) + 1;
+        
+            
+            // Get the new center based on the pixel values
+            let mass = 0;
+            let orgCenterX = 0;
+            let orgCenterY = 0;
+        
+            for(let y = minY; y <= maxY; y++) {
+                for(let x = minX; x <= maxX; x++) {
+                    const val = pixels[y][x];
+                    if(val > 0) {
+                        mass += val;
+                        orgCenterX += x * val;
+                        orgCenterY += y * val;
+                    }
+                }
+            }
+            orgCenterX /= mass;
+            orgCenterY /= mass;
+        
+
+            // Scale it to around 20 x 20.
+            const scale = 20 / Math.max(digitWid, digitHei);
+        
+            let processed = new Array(SIZE * SIZE).fill(0);
+            const targetCenter = SIZE / 2 - 0.5; 
+            
+            // Shift the digits towards the center
+            for(let y = 0; y < SIZE; y++) {
+                for(let x = 0; x < SIZE; x++) {
+                    const origX = Math.floor(orgCenterX + (x - targetCenter) / scale);
+                    const origY = Math.floor(orgCenterY + (y - targetCenter) / scale);
+        
+                    if(origX >= 0 && origX < SIZE && origY >= 0 && origY < SIZE) {
+                     
+                        processed[y * SIZE + x] = pixels[origY][origX] / 255;
+                    }
+                }
+            }
+        
+            return processed;
+        };
+        
+        // Update the hyperparameters config box
+        window.updateHypers = () => {
+            document.querySelector('#curr-epochs').innerText = net.epochs;
+            document.querySelector('#curr-bs').innerText = net.batchSize;
+            document.querySelector('#curr-lr').innerText = net.learningRate;
+            document.querySelector('#curr-dropout').innerText = net.dropoutRate * 100 + '%';
+            document.querySelector('#curr-activation').innerText = activations[net.activations[0]].name;
+        }
+        
+        const predictDrawing = (confirm=true) => {
+            /**
+             * Passes the pixels through the network and logs data
+             */
+            const inputs = preprocess(pixels)
+            const preds = net.predict([inputs]);
+            const probs = preds[0];
+            
+            const highestProbInd = probs.indexOf(Math.max(...probs));
+            console.log(`Predicted Digit: ${highestProbInd}`, probs);
+            if(confirm) {
+                document.querySelector("#confirm-btn").disabled = false;
+                document.querySelector("#wrong-btn").disabled = false;
+            }
+            updateProbs(probs)
+        }
+        
+        // Initialize the network values so you can see it on the network below
+        document.addEventListener('DOMContentLoaded', () => {
+            predictDrawing(false)
+            
+            renderNetwork(net)
+            renderGraph(net)
+            resetCanvas()
+            
+        })
+        
+        // Predict when mouse lifts up
+        drawC.addEventListener('mouseup', () => {
+            isDrawing = false;
+            predictDrawing(); 
+            renderNetwork(net);
+        });
+        
+        
+        document.querySelector('#clear-btn').addEventListener('click', resetCanvas)
+        
+        
+        const correctModal = document.querySelector("#correct-nn");
+        
+        // Open/close modal
+        document.querySelector("#wrong-btn").onclick = () => {
+            correctModal.style.display = "block";
+        };
+        document.querySelector("#correct-cancel").onclick = () => {
+            correctModal.style.display = "none";
+        };
+        
+        // Submit the corrected digit
+        document.querySelector("#correct-submit").onclick = () => {
+            const digit = Number(document.querySelector("#correct-digit").value);
+        
+            if(!Number.isInteger(digit) || digit < 0 || digit > 9) {
+                alert("Enter a digit between 0 and 9.");
+                return;
+            }
+        
+            correctModal.style.display = "none";
+        
+            const inputs = preprocess(pixels);
+        
+            net.train([[inputs, oneHotEncode(digit, 10)]], {
+                epochs: 5,
+                batchSize: 1,
+                shuffle: false,
+            });
+        
+            predictDrawing();
+        };
+
+        // Confirm the correction
+        document.querySelector('#confirm-btn').addEventListener('click', () => {
+            const inputs = preprocess(pixels)
+            const preds = net.predict([inputs]);
+            const probs = preds[0];
+            
+            const highestProbInd = probs.indexOf(Math.max(...probs));
+            net.train([[inputs, oneHotEncode(highestProbInd, 10)]], {
+                epochs: 5,
+                batchSize: 1,
+                shuffle: false,
+            })
+            document.querySelector('#confirm-btn').disabled = true
+            predictDrawing()
+        })
+    // <script>
+        
+    })()</script>
+
+    <!-- Changing the DOM + about canvases -->
+    <script type>(() => {
+        // Initialize the canvases
+        const nC = document.querySelector('#nn-structure')
+        const nCtx = nC.getContext('2d')
+        
+        nC.width = 300;
+        nC.height = 500;
+        
+        const wC = document.querySelector('#weight-viewer')
+        const wCtx = wC.getContext('2d')
+        
+        wC.width = 304
+        wC.height = 154
+        
+        const gC = document.querySelector('#loss-graph')
+        const gCtx = gC.getContext('2d')
+        
+        gC.width = 250;
+        gC.height = 150;
+        
+        let activeHighlightId = null;
+        let activeWeightId = null;
+
+        const rects = {
+            preprocessing: { y: 5, w: nC.width - 10, h: 155 },
+            input: { y: 162, w: nC.width - 10, h: 40 },
+            hidden: { y: 242, w: nC.width - 10, h: 40 },
+            output: { y: 315, w: nC.width - 10, h: 180 }
+        };
+        const hiddenNeurons = []
+      
+        // Draw the network structure
+        window.renderNetwork = (net) => {
+            hiddenNeurons.length = 0;
+            nCtx.clearRect(0, 0, nC.width, nC.height);
+            
+            if(activeHighlightId && rects[activeHighlightId]) {
+                nCtx.save();
+                nCtx.beginPath();
+                nCtx.fillStyle = 'rgba(153, 173, 235, 0.3)'; 
+                const r = rects[activeHighlightId];
+                
+                nCtx.fillRect(5, r.y, r.w, r.h); 
+                nCtx.restore(); 
+            }
+            
+            // Input pixel canvas preview
+            const pix = preprocess(pixels);
+            const pixelSize = 3;  
+            for(let i = 0; i < pix.length; i++) {
+                let x = 10 + (i % 70) * (pixelSize + 1);
+                let y = 100 + Math.floor(i / 70) * (pixelSize + 1);
+        
+                let val = Math.max(40, pix[i] * 255); 
+                nCtx.beginPath();
+                nCtx.fillStyle = `rgb(${val}, ${val}, ${val})`; 
+                nCtx.fillRect(x, y, pixelSize, pixelSize);
+                
+                x = 160 + (i % 28) * (pixelSize - 0.5)
+                y = 8 + Math.floor(i / 28) * (pixelSize - 0.5)
+                val = Math.max(10, pix[i] * 255)
+                nCtx.beginPath();
+                nCtx.fillStyle = `rgb(${val}, ${val}, ${val})`; 
+                nCtx.fillRect(x, y, pixelSize - 0.5, pixelSize - 0.5);
+            }
+            
+            nCtx.beginPath()
+            nCtx.lineWidth = 2
+            nCtx.strokeStyle = 'rgb(49, 49, 69)'
+            nCtx.rect(160, 8, 28 * (pixelSize - 0.5), 28 * (pixelSize - 0.5))
+            nCtx.stroke()
+            
+            
+            const rad = 9; 
+            const layerY = [180, 260, 340]; 
+            const nodes = [[], [], []];   
+            
+            // Input and hidden layer
+            for(let l = 0; l < 2; l++) {
+                const y = layerY[l];
+                // Left side
+                for (let i = 0; i < 4; i++) {
+                    const x = 25 + i * (rad * 2 + 8);
+                    let val = l === 0 ? pix[i] : net.A[1][i][0] * 255;
+                    nodes[l].push({ x, y, val: Math.floor(val) });
+                    hiddenNeurons.push({x, y, r: rad, neuron: i});
+                }
+                // Right side
+                for(let i = 0; i < 4; i++) {
+                    const x = nC.width - 25 - (3 - i) * (rad * 2 + 8);
+                    let val = l === 0 ? pix[pix.length - 4 + i] : net.A[1][net.A[1].length - 4 + i][0] * 255;
+                    nodes[l].push({ x, y, val: Math.floor(val) });
+                    hiddenNeurons.push({x, y, r: rad, neuron: net.A[1].length - 4 + i});
+                }
+            }
+            
+            // Output neurons
+            const outY = layerY[2];
+            const outCount = net.layers[net.layers.length - 1]; 
+            const outSpacing = (nC.width - 50) / (outCount - 1);
+            
+            for(let i = 0; i < outCount; i++) {
+                const x = 25 + i * outSpacing;
+                const rawZ = net.Z[1][i][0];
+                
+                const intensity = Math.floor(255 / (1 + Math.exp(-rawZ))); 
+                nodes[2].push({ x, y: outY, val: intensity, rawZ: rawZ });
+            }
+            
+            // Draw Connections
+            drawConnections(nodes[0], nodes[1]);
+            drawConnections(nodes[1], nodes[2]);
+            
+            // Draw neurons
+            nodes.forEach((layerNodes, lIdx) => {
+                layerNodes.forEach((node, nIdx) => {
+                    nCtx.beginPath();
+                    
+                    if(lIdx === 2) {
+
+                        nCtx.fillStyle = `rgb(${node.val}, ${Math.floor(node.val * 0.4)}, ${Math.floor(node.val * 0.5)})`;
+                    }
+                    else {
+                        nCtx.fillStyle = `rgb(${node.val}, ${Math.min(255, node.val + 40)}, ${Math.min(255, node.val + 150)})`;
+                    }
+                    
+                    nCtx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
+                    nCtx.lineWidth = 1.5;
+                    nCtx.arc(node.x, node.y, rad, 0, 2 * Math.PI);
+                    nCtx.fill();
+                    nCtx.stroke();
+        
+                    // Raw output
+                    if (lIdx === 2) {
+                        nCtx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+                        nCtx.font = '10px monospace';
+                        nCtx.textAlign = 'center';
+                        nCtx.fillText(node.rawZ.toFixed(1), node.x, node.y + 20);
+                        
+                        nCtx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                        nCtx.font = '10px sans-serif';
+                        nCtx.fillText(nIdx, node.x, node.y - 14);
+                    }
+                });
+                
+                if(lIdx < 2) {
+                    nCtx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                    nCtx.font = '24px sans-serif';
+                    nCtx.textAlign = 'center';
+                    nCtx.fillText('. . .', nC.width / 2, layerY[lIdx] + 2);
+                }
+            });
+            
+            // Softmax box
+            const smX = 20, smY = 385, smW = nC.width - 40, smH = 32;
+            
+            nCtx.fillStyle = 'rgba(75, 88, 138, 0.6)';
+            nCtx.font = '14px sans-serif';
+            nCtx.textAlign = 'center';
+            
+            nCtx.fillText('▼', nC.width * 0.25, smY - 8);
+            nCtx.fillText('▼', nC.width * 0.75, smY - 8);
+            
+            nCtx.fillText('▼', nC.width * 0.25, smY + smH + 20);
+            nCtx.fillText('▼', nC.width * 0.75, smY + smH + 20);
+            
+            nCtx.fillText('▼', nC.width / 2 + 45, 95);
+            nCtx.fillText('▼', nC.width / 2, 160);
+            
+            nCtx.fillText('▶', nC.width / 2, 50);
+    
+            nCtx.beginPath();
+            nCtx.fillStyle = 'rgb(38, 45, 74)';
+            nCtx.strokeStyle = 'rgb(75, 88, 138)';
+            nCtx.lineWidth = 2;
+            nCtx.roundRect(smX, smY, smW, smH, 6)
+            nCtx.fill();
+            nCtx.stroke();
+            
+            nCtx.fillStyle = 'rgb(229, 192, 123)';
+            nCtx.font = 'bold 13px sans-serif';
+            nCtx.textAlign = 'center';
+            nCtx.fillText('Softmax Activation', nC.width / 2, smY + 20);
+            
+            // Get the highest probability 
+            let maxProbIdx = 0;
+            let maxProbVal = -1;
+            for(let i = 0; i < outCount; i++) {
+                if (net.A[2][i][0] > maxProbVal) {
+                    maxProbVal = net.A[2][i][0];
+                    maxProbIdx = i;
+                }
+            }
+            
+            
+            // Draw the bars above the values
+            const maxbarH = 30;
+            const barWidth = 14;
+            for(let i = 0; i < outCount; i++) {
+                const x = 25 + i * outSpacing;
+                const finalProb = net.A[2][i][0]; 
+                
+                const barH = finalProb * maxbarH;
+                 
+                nCtx.beginPath();
+                if(i === maxProbIdx && finalProb > 0.05) {
+                    nCtx.fillStyle = 'rgb(56, 217, 161)';
+                    nCtx.font = 'bold 12px monospace';
+                }
+                else {
+                    nCtx.fillStyle = 'rgba(0, 190, 255, 0.4)';
+                    nCtx.font = '11px monospace';
+                }
+                
+
+                nCtx.fillRect(x - barWidth / 2, smY + smH + 46 - barH, barWidth, barH);
+                
+                if(!(i === maxProbIdx && finalProb > 0.05)) {
+                    nCtx.fillStyle = 'rgba(0, 190, 255, 0.75)';
+                }
+                
+                nCtx.textAlign = 'center';
+                nCtx.fillText(finalProb.toFixed(2), x, smY + smH + 62); 
+            }
+            
+            // Draw connections between layers
+            function drawConnections(layerA, layerB) {
+                layerA.forEach(nA => {
+                    layerB.forEach(nB => {
+                        const stren = (nA.val / 255) * (nB.val / 255);
+                        const alpha = Math.max(0.01, stren * 0.4); 
+                        nCtx.beginPath();
+                        nCtx.strokeStyle = `rgba(0, 180, 255, ${0.8})`;
+                        nCtx.lineWidth = 0.7;
+                        nCtx.moveTo(nA.x, nA.y);
+                        nCtx.lineTo(nB.x, nB.y);
+                        nCtx.stroke();
+                    });
+                });
+            }
+        };
+        
+        // Draw the weights
+        window.renderWeights = (net) => {
+            wCtx.clearRect(0, 0, wC.width, wC.height);
+            
+            wCtx.fillStyle = 'rgba(255, 255, 255, 0.8)'
+            wCtx.textAlign = 'center';
+            if(activeWeightId == null) {
+                wCtx.beginPath()
+                wCtx.font = 'bold 15px sans-serif';
+                wCtx.fillText('Click on one of the hidden neurons', wC.width / 2, wC.height / 2 - 10)
+                wCtx.fillText('above to see the weights and bias!', wC.width / 2, wC.height/2 + 10)
+            }
+            else {
+                wCtx.beginPath()
+                wCtx.font = 'bold 13px sans-serif';
+                wCtx.fillText('Weights', wC.width - 80, 22)
+                
+                wCtx.font = '11px monospace';
+                wCtx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                
+                wCtx.fillText(`Hidden layer neuron #${activeWeightId + 1}`, wC.width - 80, 43);
+                
+                // Grid of weights
+                const weights = net.weights[0][activeWeightId]
+                const pixSize = 4;  
+                const maxWeight = Math.max(...weights.map(Math.abs)) || 1.0;
+                for(let i = 0; i < weights.length; i++) {
+                    const x = 10 + (i % 28) * (pixSize + 1);
+                    const y = 10 + Math.floor(i / 28) * (pixSize + 1);
+                    const intensity = Math.floor((Math.abs(weights[i]) / maxWeight) * 255);
+                    if(weights[i] >= 0) {
+                        wCtx.fillStyle = `rgb(0, ${intensity}, 50)`;
+                    }
+                    else {
+                        wCtx.fillStyle = `rgb(${intensity}, 0, 50)`;
+                    }
+    
+                    
+                    wCtx.beginPath();
+                    wCtx.fillRect(x, y, pixSize, pixSize);
+                }
+                
+                const legendX = 170;
+                const legendOffsetY = 55;
+                wCtx.font = '11px sans-serif';
+                wCtx.textAlign = 'left';
+            
+                // Positive
+                wCtx.fillStyle = 'rgb(0, 200, 50)';
+                wCtx.fillRect(legendX, legendOffsetY, 10, 10);
+                wCtx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                wCtx.fillText('+ Positive', legendX + 16, legendOffsetY + 9);
+            
+                // Negative
+                wCtx.fillStyle = 'rgb(200, 0, 50)';
+                wCtx.fillRect(legendX, legendOffsetY + 20, 10, 10);
+                wCtx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                wCtx.fillText('- Negative', legendX + 16, legendOffsetY + 29);
+                wCtx.font = '11px monospace';
+                const biasNum = Number(net.biases[0][activeWeightId]);
+                wCtx.fillText(`Bias: ${biasNum.toFixed(5)}`, legendX - 10, legendOffsetY + 50);
+            }
+        }
+        renderWeights(net)
+        
+        // Draw the loss graph
+        window.renderGraph = (net) => {
+            
+            gCtx.clearRect(0, 0, gC.width, gC.height);
+            
+            // Get the loss and validation loss
+            const loss = net.loss.map(l => Number.parseFloat(l))
+            const valLoss = net.valLoss.map(l => Number.parseFloat(l));
+            if(loss.length === 0 && valLoss.length === 0) return;
+            
+            const padding = 25;
+            const graphWid = gC.width - padding * 2;
+            const graphHei = gC.height - padding * 2;
+            
+            const maxLoss = Math.max(...loss, ...valLoss) || 1;
+            const epochs = Math.max(loss.length, valLoss.length);
+        
+            gCtx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+            gCtx.fillStyle = 'rgb(148, 163, 184)';
+            gCtx.font = '10px sans-serif';
+            gCtx.textAlign = 'right';
+            gCtx.textBaseline = 'middle';
+        
+            // Axis lines
+            gCtx.beginPath();
+            gCtx.moveTo(padding, padding);
+            gCtx.lineTo(padding, gC.height - padding);
+            gCtx.lineTo(gC.width - padding, gC.height - padding);
+            gCtx.stroke();
+        
+            // Y ticks
+            const yTicks = 4;
+            for (let i = 0; i <= yTicks; i++) {
+                const val = (maxLoss * (i / yTicks)).toFixed(2);
+                const y = gC.height - padding - (i / yTicks) * graphHei;
+                gCtx.fillText(val, padding - 5, y);
+            }
+        
+            // X ticks
+            gCtx.textAlign = 'center';
+            gCtx.textBaseline = 'top';
+            for (let i = 0; i < epochs; i++) {
+                const index = Math.floor((i / (epochs - 1)) * (epochs - 1)) || 0;
+                const x = padding + (index / Math.max(1, epochs - 1)) * graphWid;
+                gCtx.fillText(index + 1, x, gC.height - padding + 5);
+            }
+        
+            // Loss curve
+            if(loss.length > 0) {
+                gCtx.strokeStyle = 'rgb(56, 217, 161)';
+                gCtx.beginPath();
+                for (let i = 0; i < loss.length; i++) {
+                    const x = padding + (i / Math.max(1, loss.length - 1)) * graphWid;
+                    const y = gC.height - padding - (loss[i] / maxLoss) * graphHei;
+                    if (i === 0) gCtx.moveTo(x, y);
+                    else gCtx.lineTo(x, y);
+                }
+                gCtx.stroke();
+            }
+        
+            // Validation loss curve
+            if(valLoss.length > 0) {
+                gCtx.strokeStyle = 'rgb(251, 146, 60)';
+                gCtx.beginPath();
+                for (let i = 0; i < valLoss.length; i++) {
+                    const x = padding + (i / Math.max(1, valLoss.length - 1)) * graphWid;
+                    const y = gC.height - padding - (valLoss[i] / maxLoss) * graphHei;
+                    if (i === 0) gCtx.moveTo(x, y);
+                    else gCtx.lineTo(x, y);
+                }
+                gCtx.stroke();
+            }
+        }
+        
+        const highlightLayer = (id) => {
+            activeHighlightId = id;
+            renderNetwork(net); 
+        };
+        
+        // Highlight a part of the network when hovered over an info card
+        document.querySelectorAll('.side-info').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                highlightLayer(card.id); 
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                highlightLayer(null);
+            });
+        });
+        
+        // Get the current neuron hovered over
+        nC.addEventListener('mousedown', e => {
+            const rect = nC.getBoundingClientRect();
+        
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
+        
+            let hovered = null;
+        
+            for(const neuron of hiddenNeurons) {
+                const dx = mx - neuron.x;
+                const dy = my - neuron.y;
+        
+                if(dx * dx + dy * dy <= neuron.r * neuron.r) {
+                    hovered = neuron.neuron;
+                    break;
+                }
+            }
+        
+            if(hovered !== activeWeightId) {
+                activeWeightId = hovered;
+                renderWeights(net);
+            }
+        });
+        
+        const modal = document.querySelector('.modal')
+        
+        // Show the modal when retrain btn pressed
+        document.querySelectorAll('.retrain-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                modal.style.display = 'block'
+            })
+        })
+        
+        const closeModal = () => {
+            modal.style.display = 'none'
+        };
+        modal.querySelector('#modal-cancel').addEventListener('click', closeModal);
+    
+        modal.querySelector('#modal-submit').addEventListener('click', () => {
+            showLoad();
+            
+            const epochsAttr = parseInt(document.querySelector('#modal-epochs').value, 10);
+            const lrAttr = parseFloat(document.querySelector('#modal-lr').value);
+            const bsAttr = parseInt(document.querySelector('#modal-bs').value)
+            const amtAttr = parseInt(document.querySelector('#modal-amt').value)
+            const dropAttr = parseFloat(document.querySelector('#modal-drop').value)
+            const actAttr = document.querySelector('#modal-activation').value
+            closeModal();
+    
+            console.log(`Retraining started... Epochs: ${epochsAttr}, LR: ${lrAttr}, Batch Size: ${bsAttr}, Training Amt: ${amtAttr}, Dropout rate: ${dropAttr}, Activation: ${actAttr}`);
+            
+            document.querySelector('#load-note').textContent = 'Training started, this may take a while. Open the console to see logs.'
+            console.log('Loss and Validation loss close to 0 is optimal. Validation loss should also be close in value to loss since that means it generalizes to new inputs well')
+           
+            // Retrain the modal
+            setTimeout(() => {
+                const [train, test] = trainTestSplit(data.slice(0, amtAttr), 0.9)
+                net.reset()
+                net.activations = [actAttr]
+                net.train(train, { 
+                    epochs: epochsAttr,
+                    learningRate: lrAttr,
+                    batchSize: bsAttr,
+                    dropoutRate: dropAttr,
+                    validationData: test
+                });
+                net.output();
+                renderGraph(net)
+                updateHypers()
+                hideLoad();
+            }, 50);
+        });
+        
+    
+    })()</script>
+</html>
+
